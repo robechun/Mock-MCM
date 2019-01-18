@@ -3,8 +3,6 @@ from customer import Customer
 
 import plotly
 
-plotly.tools.set_credentials_file(username='Altrum', api_key='eTVcdVDCZNi3hPJkMJTA')
-
 import numpy as np
 import plotly.plotly as py
 import plotly.graph_objs as go
