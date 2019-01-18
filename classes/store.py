@@ -10,8 +10,6 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 
 
-
-
 class Store:
     # TODO: does this even matter since ppl are approaching the
     # registers at random?
