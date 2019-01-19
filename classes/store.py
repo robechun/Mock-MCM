@@ -9,7 +9,6 @@ import plotly.graph_objs as go
 
 
 class Store:
-    # TODO: does this even matter since ppl are approaching the
     # registers at random?
     aisles = 0
 
@@ -68,15 +67,17 @@ def sim(customers_per_hour, open_registers, register_array_size):
     registerArray = RegisterArray(registerArraySize)
     for number in open_registers:
         registerArray.registers[number].open_register()
-    # for i in range(0, 15):
-        # registerArray.registers[i].open_register()
 
     expected_number_of_customers_in_hour = customers_per_hour
     average_per_minute = expected_number_of_customers_in_hour / 60
 
     # how many people enter the store every minute
     # calculated by doing a poisson distribution
-    # TODO: for actual use, need to know how many PEOPLE go to the store.
+
+    avg_checkout_time = 2
+    # TODO: have to find a good standard deviation
+    standard_dev = 0.5
+    customer_actual_time = 0
     for i in range(0, 60):
         sample = np.random.poisson(average_per_minute)
 
@@ -84,15 +85,10 @@ def sim(customers_per_hour, open_registers, register_array_size):
         # via normal distribution
         # This has a figure from data -- avg time per week thing
 
-        # TODO: have to find a good standard deviation
-        average_time_in_grocery_store_min = 20
-        standard_dev = 10
 
-        durations = np.random.normal(average_time_in_grocery_store_min,
+        durations = np.random.normal(avg_checkout_time,
                                      standard_dev, sample)
         customers = list(map(lambda duration: Customer(duration), durations))
-
-        # TODO: figure out how to incorporate open/closed registers
 
         # For each customer, choose a register
         for customer in customers:
@@ -100,20 +96,45 @@ def sim(customers_per_hour, open_registers, register_array_size):
                         np.random.randint(0, registerArraySize),
                         registerArray)
             registerArray.enqueue(customer, chosenReg)
+            customer_actual_time += customer.actual_time_to_checkout
 
-        while (not registerArray.isFinished()):
-            registerArray.tick(False)
+        registerArray.tick(False)
 
+    while (not registerArray.isFinished()):
+        registerArray.tick(False)
+
+    customer_avg_time = customer_actual_time / expected_number_of_customers_in_hour 
     print("----end----")
     print("TickCount: {}".format(registerArray.tickCount))
+    print("Customer avg time checkout: {}".format(customer_avg_time))
 
-    return registerArray.tickCount
+    return {"tickCount": registerArray.tickCount, "customer_avg":
+            customer_avg_time}
 
 
-if __name__ == '__main__':
-    print("starting program...")
-    # test()
+def find_max_registers(expected_customers, acceptable_time):
+    acceptable_found = False
 
+    # run 40 times so that you eliminate error
+    num_sims = 40
+    arraySize = 1
+    while (not acceptable_found):
+        count = 0
+
+        for i in range(0, num_sims):
+            count += sim(expected_customers, np.arange(arraySize),
+            arraySize)['customer_avg']
+
+        actual = count/num_sims
+        # print("count/num_sims for arraySize {} is {}".format(arraySize, actual))
+        if actual <= acceptable_time:
+            print("Found!")
+            return arraySize
+
+        arraySize += 1
+
+
+def run_sample_sims():
     tickCount = 0
     num_of_sims = 10
     # Run same simulation 100 times
@@ -131,29 +152,30 @@ if __name__ == '__main__':
 
     avgTickCount = tickCount / num_of_sims
 
+    # ---------- START -------------- #
     sim_setups = [
             {
-                "people": 100000,
+                "people": 500,
                 "pattern": [1, 3, 5, 7, 9],
                 "lanes": 15
             },
             {
-                "people": 100000,
+                "people": 500,
                 "pattern": [1, 2, 3, 4, 5],
                 "lanes": 15
             },
             {
-                "people": 100000,
+                "people": 500,
                 "pattern": [2, 3, 4, 5, 6],
                 "lanes": 15
             },
             {
-                "people": 100000,
+                "people": 500,
                 "pattern": [5, 6, 7, 8, 9],
                 "lanes": 15
             },
             {
-                "people": 100000,
+                "people": 500,
                 "pattern": [1, 4, 7, 11, 14],
                 "lanes": 15
             }
@@ -164,7 +186,8 @@ if __name__ == '__main__':
     for setup in sim_setups:
         tickCount = 0
         for i in range(0, num_of_sims):
-            tickCount += sim(setup['people'], setup['pattern'], setup['lanes'])
+            tickCount += sim(setup['people'], setup['pattern'],
+                    setup['lanes'])['tickCount']
 
         avgTickCount = tickCount / num_of_sims
         result.append({"pattern": setup['pattern'], "result": avgTickCount})
@@ -180,6 +203,30 @@ if __name__ == '__main__':
 
     data = [go.Bar(x=X, y=Y)]
 
-    py.plot(data, filename='basic-bar')
+    py.plot(data, filename='basic-bar2')
 
     print(result)
+
+
+def max_reg_sims():
+    accept_time = 5
+    result = []
+
+    for i in range(100, 520, 30):
+        result.append([i, find_max_registers(i, accept_time)])
+
+    X = list(map(lambda item: item[0], result))
+    Y = list(map(lambda item: item[1], result))
+
+    data = [go.Bar(x=X, y=Y)]
+    py.plot(data, filename='max_register')
+
+
+if __name__ == '__main__':
+    print("starting program...")
+    # max_reg_sims()
+    # find_max_registers(400, 5)
+    run_sample_sims()
+
+
+# TickCount is how long to service EVERYONE in one hour

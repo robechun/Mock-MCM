@@ -1,9 +1,10 @@
 class Customer:
-    checkout_time_hour = 0
+    checkout_time_min = 0
     field_of_vision = 3  # for simplicity make it odd number
+    actual_time_to_checkout = 0
 
-    def __init__(self, checkout_time_hour):
-        self.checkout_time_hour = checkout_time_hour
+    def __init__(self, checkout_time_min):
+        self.checkout_time_min = checkout_time_min
 
     # Available lanes are given to you.
     # Choose the one with the shortest wait time
@@ -57,7 +58,7 @@ class Customer:
         return chosen
 
     def __str__(self):
-        return "Customer checkout time in hours:{}".format(self.checkout_time_hour)
+        return "Customer checkout time in min:{}".format(self.customer_time_min)
 
 
 # registerArray -> choose random spot -> give closest x lanes to "choose_lane"

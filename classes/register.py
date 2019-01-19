@@ -16,7 +16,8 @@ class Register:
 
     # Add customer to queue by adding their checkout-time
     def enqueue(self, customer):
-        self.current_wait += customer.checkout_time_hour
+        customer.actual_time_to_checkout = self.current_wait + customer.checkout_time_min
+        self.current_wait += customer.checkout_time_min
 
     # counter to reduce current_wait (by unit of time)
     def tick(self):
@@ -57,7 +58,7 @@ class RegisterArray:
         # Check to see if all lines are clear.
         done = list(filter(lambda x: x.current_wait <= 0, self.registers))
         if len(done) == len(self.registers):
-            print("DONE!")
+            # print("DONE!")
             self.done = True
             return
 
